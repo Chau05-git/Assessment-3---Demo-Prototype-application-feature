@@ -13,8 +13,16 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
+import { useBadWordFilter } from '@/hooks/use-bad-word-filter';
+
 export default function HomeScreen() {
   const [text, setText] = useState('');
+  const filterText = useBadWordFilter();
+
+  const handleChangeText = (input: string) => {
+    const { filtered } = filterText(input);
+    setText(filtered);
+  };
 
   const goToGenerate = () => {
     Keyboard.dismiss();
@@ -37,6 +45,8 @@ export default function HomeScreen() {
   };
 
   const hasText = text.trim().length > 0;
+  // Count groups of asterisks currently visible in the input.
+  const filteredCount = (text.match(/\*+/g) ?? []).length;
 
   return (
     <KeyboardAvoidingView
@@ -47,7 +57,7 @@ export default function HomeScreen() {
         <View style={styles.text_box}>
           <TextInput
             value={text}
-            onChangeText={setText}
+            onChangeText={handleChangeText}
             placeholder="Type something..."
             placeholderTextColor="#bbb"
             style={styles.text_input}
@@ -57,6 +67,14 @@ export default function HomeScreen() {
             blurOnSubmit={false}
           />
         </View>
+
+        {filteredCount > 0 && (
+          <View style={styles.warning_badge}>
+            <Text style={styles.warning_text}>
+              {filteredCount} bad word{filteredCount > 1 ? 's' : ''} filtered
+            </Text>
+          </View>
+        )}
 
         {hasText && (
           <Pressable style={styles.qr_preview} onPress={goToGenerate}>
@@ -109,8 +127,22 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 8,
   },
+  warning_badge: {
+    marginTop: 12,
+    backgroundColor: '#fde8e8',
+    borderColor: '#dc2626',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  warning_text: {
+    color: '#b91c1c',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   qr_preview: {
-    marginTop: 20,
+    marginTop: 16,
     backgroundColor: '#fff',
     padding: 12,
     borderRadius: 12,
